@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <title>FeedCraft - 18格社群排審工作台</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col font-sans">
+
+    <!-- 頂部導航列 -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 px-4 py-2.5 shadow-sm">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 flex items-center justify-center text-white shadow-md shadow-rose-500/20">
+                    <i data-lucide="layout-grid" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-slate-900 tracking-tight text-base">FeedCraft</span>
+                        <span class="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-medium border border-indigo-100">18 格雙週排審</span>
+                    </div>
+                    <p class="text-xs text-slate-400">社群排版預覽與主管過稿工作台</p>
+                </div>
+            </div>
+
+            <!-- 審核狀態統計徽章 -->
+            <div class="hidden md:flex items-center gap-2 text-xs bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+                <span class="flex items-center gap-1 text-emerald-600 font-medium">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>已核准: <span id="stat-approved">0</span>
+                </span>
+                <span class="text-slate-300">|</span>
+                <span class="flex items-center gap-1 text-amber-600 font-medium">
+                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>待審核: <span id="stat-pending">0</span>
+                </span>
+                <span class="text-slate-300">|</span>
+                <span class="flex items-center gap-1 text-rose-600 font-medium">
+                    <span class="w-2 h-2 rounded-full bg-rose-500"></span>需修改: <span id="stat-rejected">0</span>
+                </span>
+            </div>
+
+            <!-- 功能按鈕群 -->
+            <div class="flex items-center gap-2 flex-wrap">
+                <button onclick="saveAllData(true)" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium shadow-sm transition">
+                    <i data-lucide="cloud-upload" class="w-4 h-4"></i>
+                    <span>儲存並同步</span>
+                </button>
+                <button onclick="copyReviewLink()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-medium border border-indigo-200 transition">
+                    <i data-lucide="share-2" class="w-4 h-4"></i>
+                    <span>複製主管審核連結</span>
+                </button>
+                <button onclick="toggleCustomCloudModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium border border-slate-300 transition">
+                    <i data-lucide="database" class="w-4 h-4"></i>
+                    <span>自訂私人雲端</span>
+                </button>
+                <button onclick="togglePresentationMode()" id="pres-btn" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-medium transition">
+                    <i data-lucide="monitor" class="w-4 h-4"></i>
+                    <span id="pres-btn-text">主管提報模式</span>
+                </button>
+                <button onclick="toggleSidebar()" id="sidebar-toggle-btn" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-medium border border-slate-200 transition">
+                    <i data-lucide="panel-right" class="w-4 h-4"></i>
+                    <span>編輯面板</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主工作區 -->
+    <main class="max-w-7xl mx-auto w-full flex-1 p-4 md:p-6 flex flex-col lg:flex-row gap-6 items-start justify-center">
+
+        <!-- 左側：iPhone 18 格排版模擬器 -->
+        <div id="phone-container" class="w-full lg:w-[420px] flex-shrink-0 flex flex-col items-center">
+            <div class="relative w-[380px] bg-black rounded-[52px] p-3 shadow-2xl ring-1 ring-slate-900/10">
+                <!-- iPhone 聽筒 / 動態島 -->
+                <div class="absolute top-5 left-1/2 -translate-x-1/2 w-28 h-6 bg-black rounded-full z-20 flex items-center justify-between px-2.5">
+                    <div class="w-2.5 h-2.5 rounded-full bg-slate-900"></div>
+                    <div class="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></div>
+                </div>
+
+                <!-- 手機內螢幕 (可垂直捲動) -->
+                <div id="phone-screen" class="w-full h-[740px] bg-white rounded-[42px] overflow-y-auto custom-scrollbar flex flex-col relative select-none">
+                    
+                    <!-- 頂部時間列 -->
+                    <div class="pt-3 px-7 pb-1 flex justify-between items-center text-xs font-semibold text-slate-800 bg-white sticky top-0 z-10">
+                        <span>17:36</span>
+                        <div class="flex items-center gap-1.5">
+                            <i data-lucide="signal" class="w-3.5 h-3.5"></i>
+                            <i data-lucide="wifi" class="w-3.5 h-3.5"></i>
+                            <i data-lucide="battery-charging" class="w-4 h-4 text-emerald-600"></i>
+                        </div>
+                    </div>
+
+                    <!-- IG 帳號頂欄 -->
+                    <div class="px-4 py-2 flex items-center justify-between border-b border-slate-50">
+                        <div class="flex items-center gap-4">
+                            <i data-lucide="chevron-left" class="w-6 h-6 stroke-[2]"></i>
+                            <span id="preview-username" class="font-bold text-base tracking-tight text-slate-900">monaqotravel</span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <i data-lucide="bell" class="w-5 h-5"></i>
+                            <i data-lucide="more-horizontal" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+
+                    <!-- 個人資訊區塊 (大頭貼/統計) -->
+                    <div class="px-4 pt-3 pb-2">
+                        <div class="flex items-center justify-between gap-4">
+                            <!-- 大頭貼 (點擊可直接本機上傳替換) -->
+                            <div class="relative group cursor-pointer" onclick="document.getElementById('avatar-file-input').click()">
+                                <div class="w-[78px] h-[78px] rounded-full p-[2.5px] bg-gradient-to-tr from-amber-400 via-rose-500 to-purple-600">
+                                    <div class="w-full h-full rounded-full bg-white p-[2px]">
+                                        <img id="preview-avatar" referrerpolicy="no-referrer" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80" alt="Avatar" class="w-full h-full rounded-full object-cover">
+                                    </div>
+                                </div>
+                                <div class="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-[10px] font-medium">
+                                    更換
+                                </div>
+                                <input type="file" id="avatar-file-input" accept="image/*" class="hidden" onchange="handleAvatarUpload(event)">
+                            </div>
+
+                            <!-- 貼文 / 粉絲 / 追蹤數 -->
+                            <div class="flex-1 flex justify-around text-center pr-2">
+                                <div>
+                                    <div class="font-bold text-base text-slate-900">18</div>
+                                    <div class="text-[11px] text-slate-500">貼文</div>
+                                </div>
+                                <div>
+                                    <div id="preview-followers" class="font-bold text-base text-slate-900">24.1 萬</div>
+                                    <div class="text-[11px] text-slate-500">位粉絲</div>
+                                </div>
+                                <div>
+                                    <div id="preview-following" class="font-bold text-base text-slate-900">2</div>
+                                    <div class="text-[11px] text-slate-500">追蹤中</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 帳號全名與個人簡介 Bio -->
+                        <div class="mt-2.5">
+                            <div id="preview-fullname" class="font-bold text-xs text-slate-900">Aluminum Skeleton - Designed In Canada</div>
+                            <div id="preview-bio" class="text-xs text-slate-700 whitespace-pre-line mt-0.5 leading-relaxed">Wake from sameness.
+Monotony is the real risk, but adventure is the cure.</div>
+                            <span class="text-xs text-slate-400 mt-0.5 block">翻譯年糕</span>
+                        </div>
+
+                        <!-- 追蹤 / 發訊息 按鈕群 -->
+                        <div class="grid grid-cols-2 gap-2 mt-3 text-xs font-semibold">
+                            <button class="bg-slate-100 hover:bg-slate-200 text-slate-900 py-1.5 rounded-lg flex items-center justify-center gap-1 transition">
+                                追蹤中 <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button class="bg-slate-100 hover:bg-slate-200 text-slate-900 py-1.5 rounded-lg text-center transition">
+                                發訊息
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- IG 頁籤導航 (九宮格/Reels/標註) -->
+                    <div class="border-t border-slate-100 mt-2 flex justify-around text-slate-400">
+                        <button class="flex-1 py-2.5 flex justify-center text-slate-900 border-b-2 border-slate-900">
+                            <i data-lucide="grid" class="w-5 h-5"></i>
+                        </button>
+                        <button class="flex-1 py-2.5 flex justify-center hover:text-slate-600 transition">
+                            <i data-lucide="film" class="w-5 h-5"></i>
+                        </button>
+                        <button class="flex-1 py-2.5 flex justify-center hover:text-slate-600 transition">
+                            <i data-lucide="user-square-2" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+
+                    <!-- 18 格 4:5 排版網格區 -->
+                    <div id="grid-container" class="grid grid-cols-3 gap-[2px] bg-slate-100 flex-1">
+                        <!-- 由 JavaScript 動態渲染 18 格貼文 -->
+                    </div>
+
+                    <div class="py-6 text-center text-slate-300 text-[11px]">
+                        FeedCraft 排審預覽底部
+                    </div>
+                </div>
+            </div>
+            <p class="text-xs text-slate-400 mt-2 text-center">支援捲動滑動檢視全數 18 格排版</p>
+        </div>
+
+        <!-- 右側：編輯與設定管理側欄 -->
+        <div id="sidebar-container" class="flex-1 w-full max-w-2xl flex flex-col gap-4">
+            
+            <!-- 帳號基礎設定卡片 -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+                <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleAccountSettings()">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="user-cog" class="w-4 h-4 text-indigo-600"></i>
+                        <h3 class="font-bold text-sm text-slate-900">帳號個人檔案資訊</h3>
+                    </div>
+                    <i id="account-settings-chevron" data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform"></i>
+                </div>
+                <div id="account-settings-content" class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs pt-1">
+                    <div>
+                        <label class="block text-slate-500 font-medium mb-1">帳號名稱 (Username)</label>
+                        <input type="text" id="input-username" oninput="updateProfileMeta()" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500" value="monaqotravel">
+                    </div>
+                    <div>
+                        <label class="block text-slate-500 font-medium mb-1">全名標題 (Full Name)</label>
+                        <input type="text" id="input-fullname" oninput="updateProfileMeta()" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500" value="Aluminum Skeleton - Designed In Canada">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-slate-500 font-medium mb-1">個人簡介 (Bio)</label>
+                        <textarea id="input-bio" oninput="updateProfileMeta()" rows="2" class="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500">Wake from sameness.
+Monotony is the real risk, but adventure is the cure.</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 18 篇素材文案編輯器清單 -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col">
+                <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="layers" class="w-4 h-4 text-indigo-600"></i>
+                        <h3 class="font-bold text-sm text-slate-900">18 篇貼文素材與文案管理</h3>
+                    </div>
+                    <span class="text-xs text-slate-400">#1~#18 依序對應九宮格由上至下</span>
+                </div>
+                
+                <div id="posts-editor-list" class="p-4 space-y-4 max-h-[680px] overflow-y-auto custom-scrollbar">
+                    <!-- 由 JavaScript 渲染 18 則貼文編輯面板 -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 點擊放大審核 Modal -->
+    <div id="review-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row relative">
+            <button onclick="closeReviewModal()" class="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <!-- 媒體檢視區域 (4:5 比例) -->
+            <div class="w-full md:w-1/2 bg-black flex items-center justify-center relative min-h-[360px]">
+                <div id="modal-media-container" class="w-full h-full flex items-center justify-center">
+                    <!-- 動態載入圖片、輪播或影片 -->
+                </div>
+                <!-- 輪播左右切換鈕 -->
+                <button id="carousel-prev" onclick="changeCarouselSlide(-1)" class="absolute left-2 w-8 h-8 rounded-full bg-black/40 text-white hidden items-center justify-center hover:bg-black/70">
+                    <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                </button>
+                <button id="carousel-next" onclick="changeCarouselSlide(1)" class="absolute right-2 w-8 h-8 rounded-full bg-black/40 text-white hidden items-center justify-center hover:bg-black/70">
+                    <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                </button>
+                <div id="carousel-indicator" class="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/60 px-2.5 py-0.5 rounded-full text-[10px] text-white hidden">
+                    1 / 3
+                </div>
+            </div>
+
+            <!-- 右側文案與審稿反饋面板 -->
+            <div class="w-full md:w-1/2 p-6 flex flex-col justify-between overflow-y-auto custom-scrollbar max-h-[500px] md:max-h-none">
+                <div>
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <div class="flex items-center gap-2">
+                            <span id="modal-post-index" class="text-xs font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded">#1</span>
+                            <span id="modal-post-type" class="text-xs text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded">圖文貼文</span>
+                        </div>
+                        <div id="modal-status-badge"></div>
+                    </div>
+
+                    <!-- 文案內容 -->
+                    <div class="mt-4">
+                        <h4 class="text-xs font-bold text-slate-400 mb-1">社群文案內容</h4>
+                        <div id="modal-caption" class="text-sm text-slate-800 whitespace-pre-line leading-relaxed max-h-48 overflow-y-auto custom-scrollbar p-2.5 bg-slate-50 rounded-lg border border-slate-100"></div>
+                    </div>
+
+                    <!-- 主管審核操作區 -->
+                    <div class="mt-4 pt-4 border-t border-slate-100">
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">主管審核狀態</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button onclick="setModalPostStatus('approved')" class="py-2 text-xs font-medium rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition flex items-center justify-center gap-1">
+                                <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> 核准
+                            </button>
+                            <button onclick="setModalPostStatus('pending')" class="py-2 text-xs font-medium rounded-lg border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 transition flex items-center justify-center gap-1">
+                                <i data-lucide="clock" class="w-3.5 h-3.5"></i> 待審核
+                            </button>
+                            <button onclick="setModalPostStatus('rejected')" class="py-2 text-xs font-medium rounded-lg border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 transition flex items-center justify-center gap-1">
+                                <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> 需修改
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 底部貼文導覽切換 -->
+                <div class="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <button onclick="navigateModalPost(-1)" class="flex items-center gap-1 text-slate-500 hover:text-slate-800 transition">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i> 上一篇
+                    </button>
+                    <button onclick="navigateModalPost(1)" class="flex items-center gap-1 text-slate-500 hover:text-slate-800 transition">
+                        下一篇 <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 自訂私人雲端設定 Modal -->
+    <div id="cloud-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl p-6 relative">
+            <button onclick="toggleCustomCloudModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <div class="flex items-center gap-2 mb-3">
+                <i data-lucide="database" class="w-5 h-5 text-indigo-600"></i>
+                <h3 class="font-bold text-base text-slate-900">自訂私人雲端 (Google Apps Script)</h3>
+            </div>
+            <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                貼上您個人的 Google Apps Script Web App 網址，所有 18 格排版與主管審查狀態將 100% 寫入您專屬的 Google 試算表。
+            </p>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Google Apps Script Web App URL</label>
+                    <input type="text" id="custom-gas-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="saveCustomCloudUrl()" class="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition">
+                        儲存連線網址
+                    </button>
+                    <button onclick="clearCustomCloudUrl()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-lg transition">
+                        重設
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 審核連結複製通知 Toast -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-xl text-xs font-medium z-50 transform translate-y-16 opacity-0 transition-all duration-300 flex items-center gap-2">
+        <i data-lucide="check" class="w-4 h-4 text-emerald-400"></i>
+        <span id="toast-message">操作完成</span>
+    </div>
+
+    <!-- 核心 JavaScript 邏輯 -->
+    <script>
+        // 預設 18 則高品質排審素材
+        const defaultPosts = [
+            { id: 1, type: 'post', isPinned: true, status: 'approved', media: ['https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80'], caption: '【晨曦光影與建築的對話】\n光線穿透階梯，勾勒出極簡生活的靜謐之美。' },
+            { id: 2, type: 'reels', isPinned: false, status: 'pending', media: ['https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80'], caption: '【深入霧氣繚繞的針葉林】\n在蜿蜒的公路盡頭，遇見自然的呼吸節奏。' },
+            { id: 3, type: 'post', isPinned: false, status: 'pending', media: ['https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80'], caption: '【拱門迴廊下的極簡構圖】\n空間的留白，是心靈最好的沉澱。' },
+            { id: 4, type: 'post', isPinned: false, status: 'approved', media: ['https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80'], caption: '【生活角落的質樸細節】\n一張椅，一抹光，靜候午後的溫暖。' },
+            { id: 5, type: 'reels', isPinned: false, status: 'approved', media: ['https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=800&q=80'], caption: '【破曉時分的漫步身影】\n走出陰影，擁抱黎明的第一縷微光。' },
+            { id: 6, type: 'carousel', isPinned: false, status: 'rejected', media: ['https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80', 'https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=800&q=80'], caption: '【蔚藍海岸的餐桌對話】\n吹著微鹹海風，品味生活的純粹本質。' },
+            { id: 7, type: 'post', isPinned: false, status: 'pending', media: ['https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=800&q=80'], caption: '【巷弄咖啡香與書頁翻動】\n慢下來，聽一聽心裡的聲音。' },
+            { id: 8, type: 'post', isPinned: false, status: 'approved', media: ['https://images.unsplash.com/photo-1506929562872-bb421503ef21?auto=format&fit=crop&w=800&q=80'], caption: '【遠眺懸崖海灣的白裙剪影】\n旅行是為了在日常之外，找到全新的自己。' },
+            { id: 9, type: 'reels', isPinned: false, status: 'approved', media: ['https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80'], caption: '【雨中木造食堂的暖心料理】\n熱氣蒸騰的味噌湯，治癒整日的疲憊。' },
+            { id: 10, type: 'post', isPinned: false, status: 'pending', media: ['https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&w=800&q=80'], caption: '【海風輕拂的度假木屋】\n讓大自然成為你最奢侈的背景。' },
+            { id: 11, type: 'post', isPinned: false, status: 'approved', media: ['https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=800&q=80'], caption: '【公路旅行指南：出發吧】\n不要猶豫，最美的風景永遠在前方。' },
+            { id: 12, type: 'carousel', isPinned: false, status: 'pending', media: ['https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&w=800&q=80', 'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?auto=format&fit=crop&w=800&q=80'], caption: '【秋日森林徒步選品推薦】\n輕量隨行，讓裝備成為探索的最佳後盾。' },
+            { id: 13, type: 'post', isPinned: false, status: 'approved', media: ['https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=800&q=80'], caption: '【光穿透樹冠的瞬間】\n捕捉大自然無意間留下的魔法碎片。' },
+            { id: 14, type: 'reels', isPinned: false, status: 'pending', media: ['https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=800&q=80'], caption: '【湖畔晨霧倒影】\n平靜如鏡的水面，倒映著遠山的蒼翠。' },
+            { id: 15, type: 'post', isPinned: false, status: 'approved', media: ['https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=800&q=80'], caption: '【落日熔金的麥浪】\n金黃色的微風吹過，是大地的深情呼喚。' },
+            { id: 16, type: 'post', isPinned: false, status: 'pending', media: ['https://images.unsplash.com/photo-1470246973918-29a93221c455?auto=format&fit=crop&w=800&q=80'], caption: '【雪山腳下的露營夜】\n點起一堆篝火，仰望無邊浩瀚星空。' },
+            { id: 17, type: 'carousel', isPinned: false, status: 'approved', media: ['https://images.unsplash.com/photo-1510312305653-8ed496efae75?auto=format&fit=crop&w=800&q=80', 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=800&q=80'], caption: '【極簡旅行穿搭清單】\n三件必備單品，陪你輕鬆穿梭城市與自然。' },
+            { id: 18, type: 'post', isPinned: false, status: 'pending', media: ['https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=800&q=80'], caption: '【古老山城階梯的午後】\n一步一步，踩過幾百年的歲月刻痕。' }
+        ];
+
+        let posts = [];
+        let profileMeta = {
+            username: 'monaqotravel',
+            fullname: 'Aluminum Skeleton - Designed In Canada',
+            bio: 'Wake from sameness.\nMonotony is the real risk, but adventure is the cure.'
+        };
+        let currentModalPostId = 1;
+        let currentCarouselIndex = 0;
+        let isPresentationMode = false;
+        let isSidebarOpen = true;
+
+        // 初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            loadInitialData();
+            checkUrlMode();
+            lucide.createIcons();
+        });
+
+        // 載入資料（優先讀取 LocalStorage 或自訂雲端）
+        function loadInitialData() {
+            const savedPosts = localStorage.getItem('feedcraft_posts_18');
+            if (savedPosts) {
+                try {
+                    posts = JSON.parse(savedPosts);
+                } catch(e) {
+                    posts = defaultPosts;
+                }
+            } else {
+                posts = defaultPosts;
+            }
+
+            const savedProfile = localStorage.getItem('feedcraft_profile');
+            if (savedProfile) {
+                try { profileMeta = JSON.parse(savedProfile); } catch(e) {}
+            }
+
+            const savedAvatar = localStorage.getItem('feedcraft_avatar');
+            if (savedAvatar) {
+                document.getElementById('preview-avatar').src = savedAvatar;
+            }
+
+            renderProfile();
+            renderGrid();
+            renderSidebar();
+            updateStatistics();
+        }
+
+        // 檢查網址參數是否為審核模式
+        function checkUrlMode() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('mode') === 'review') {
+                enablePresentationMode();
+            }
+        }
+
+        // 渲染 18 格 4:5 九宮格
+        function renderGrid() {
+            const container = document.getElementById('grid-container');
+            container.innerHTML = '';
+
+            posts.forEach(post => {
+                const item = document.createElement('div');
+                item.className = 'relative aspect-[4/5] bg-slate-200 overflow-hidden group cursor-pointer';
+                item.onclick = () => openReviewModal(post.id);
+
+                const coverImg = post.media && post.media.length > 0 ? post.media[0] : 'https://placehold.co/800x1000?text=No+Image';
+
+                item.innerHTML = `
+                    <img src="${coverImg}" referrerpolicy="no-referrer" alt="Post ${post.id}" class="w-full h-full object-cover select-none">
+                    
+                    <!-- 右上角類型標示 -->
+                    <div class="absolute top-1.5 right-1.5 flex items-center gap-1 drop-shadow-md text-white">
+                        ${post.isPinned ? '<i data-lucide="pin" class="w-3.5 h-3.5 fill-white"></i>' : ''}
+                        ${post.type === 'reels' ? '<i data-lucide="play" class="w-3.5 h-3.5 fill-white"></i>' : ''}
+                        ${post.type === 'carousel' ? `
+                            <span class="text-[9px] font-bold bg-black/40 backdrop-blur-sm px-1 py-0.2 rounded">${post.media.length}P</span>
+                            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                        ` : ''}
+                    </div>
+
+                    <!-- 狀態點 -->
+                    <div class="absolute bottom-1.5 left-1.5">
+                        <span class="w-2 h-2 rounded-full block ring-1 ring-white ${
+                            post.status === 'approved' ? 'bg-emerald-500' :
+                            post.status === 'rejected' ? 'bg-rose-500' : 'bg-amber-500'
+                        }"></span>
+                    </div>
+
+                    <!-- 滑鼠移至 (Hover) 毛玻璃文案預覽 -->
+                    <div class="absolute inset-0 bg-slate-900/75 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-2.5 flex flex-col justify-between text-white text-[11px] leading-tight select-none">
+                        <div>
+                            <div class="flex items-center justify-between mb-1 text-[10px] text-slate-300">
+                                <span class="font-bold">#${post.id}</span>
+                                <span>${post.type === 'reels' ? '短影音' : post.type === 'carousel' ? '多圖輪播' : '單張貼文'}</span>
+                            </div>
+                            <p class="line-clamp-6 text-slate-100 font-normal whitespace-pre-line">${post.caption || '無文案'}</p>
+                        </div>
+                        <div class="pt-1 border-t border-white/20 text-[10px] flex items-center justify-between">
+                            <span>點擊放大審核</span>
+                            <span class="${post.status === 'approved' ? 'text-emerald-300' : post.status === 'rejected' ? 'text-rose-300' : 'text-amber-300'} font-semibold">
+                                ${post.status === 'approved' ? '已核准' : post.status === 'rejected' ? '需修改' : '待審核'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+            lucide.createIcons();
+        }
+
+        // 渲染側邊欄 18 則貼文編輯面板
+        function renderSidebar() {
+            const container = document.getElementById('posts-editor-list');
+            container.innerHTML = '';
+
+            posts.forEach(post => {
+                const card = document.createElement('div');
+                card.className = 'p-3 rounded-lg border border-slate-100 bg-slate-50/60 space-y-2 text-xs';
+                
+                const carouselControlsHtml = post.type === 'carousel' ? `
+                    <div class="pt-2 border-t border-slate-200">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="font-semibold text-slate-600 text-[11px]">輪播圖列表 (${post.media.length} 張，可左右調整順序)：</span>
+                            <button onclick="document.getElementById('carousel-file-${post.id}').click()" class="text-indigo-600 hover:text-indigo-800 text-[11px] font-semibold flex items-center gap-1">
+                                <i data-lucide="plus" class="w-3 h-3"></i> 加圖
+                            </button>
+                            <input type="file" id="carousel-file-${post.id}" multiple accept="image/*" class="hidden" onchange="handleCarouselUpload(${post.id}, event)">
+                        </div>
+                        <div class="grid grid-cols-4 gap-1.5">
+                            ${post.media.map((img, idx) => `
+                                <div class="relative group aspect-square rounded bg-slate-200 overflow-hidden border border-slate-300">
+                                    <img src="${img}" class="w-full h-full object-cover">
+                                    <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-around text-white px-1">
+                                        <button onclick="moveCarouselItem(${post.id}, ${idx}, -1)" class="hover:text-amber-300 ${idx === 0 ? 'invisible' : ''}" title="向前移">◀</button>
+                                        <button onclick="removeCarouselItem(${post.id}, ${idx})" class="hover:text-rose-400 text-xs" title="刪除">✕</button>
+                                        <button onclick="moveCarouselItem(${post.id}, ${idx}, 1)" class="hover:text-amber-300 ${idx === post.media.length - 1 ? 'invisible' : ''}" title="向後移">▶</button>
+                                    </div>
+                                    <span class="absolute bottom-0.5 right-0.5 bg-black/70 text-[9px] text-white px-1 rounded">${idx + 1}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : '';
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-bold text-slate-800">#${post.id}</span>
+                            <select onchange="changePostType(${post.id}, this.value)" class="bg-white border border-slate-200 rounded px-1.5 py-0.5 font-medium">
+                                <option value="post" ${post.type === 'post' ? 'selected' : ''}>圖文貼文 (Post)</option>
+                                <option value="reels" ${post.type === 'reels' ? 'selected' : ''}>短影音 (Reels)</option>
+                                <option value="carousel" ${post.type === 'carousel' ? 'selected' : ''}>多圖輪播 (Carousel)</option>
+                            </select>
+                            <label class="flex items-center gap-1 text-[11px] text-slate-500 cursor-pointer">
+                                <input type="checkbox" ${post.isPinned ? 'checked' : ''} onchange="togglePinPost(${post.id})"> 釘選
+                            </label>
+                        </div>
+                        <select onchange="changePostStatus(${post.id}, this.value)" class="bg-white border border-slate-200 rounded px-1.5 py-0.5 font-semibold ${
+                            post.status === 'approved' ? 'text-emerald-600' :
+                            post.status === 'rejected' ? 'text-rose-600' : 'text-amber-600'
+                        }">
+                            <option value="pending" ${post.status === 'pending' ? 'selected' : ''}>⏳ 待審核</option>
+                            <option value="approved" ${post.status === 'approved' ? 'selected' : ''}>✅ 已核准</option>
+                            <option value="rejected" ${post.status === 'rejected' ? 'selected' : ''}>⚠️ 需修改</option>
+                        </select>
+                    </div>
+
+                    ${post.type !== 'carousel' ? `
+                        <div class="flex items-center gap-2">
+                            <input type="text" value="${post.media[0] || ''}" onchange="updateSingleMediaUrl(${post.id}, this.value)" placeholder="貼上素材圖片/縮圖網址..." class="flex-1 bg-white border border-slate-200 rounded px-2 py-1 text-slate-600 focus:outline-none">
+                            <button onclick="document.getElementById('single-file-${post.id}').click()" class="px-2 py-1 bg-slate-200 hover:bg-slate-300 rounded text-[11px] font-medium transition">
+                                本機上傳
+                            </button>
+                            <input type="file" id="single-file-${post.id}" accept="image/*" class="hidden" onchange="handleSingleUpload(${post.id}, event)">
+                        </div>
+                    ` : ''}
+
+                    ${carouselControlsHtml}
+
+                    <div>
+                        <textarea oninput="updatePostCaption(${post.id}, this.value)" placeholder="輸入社群文案..." rows="2" class="w-full bg-white border border-slate-200 rounded p-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500">${post.caption}</textarea>
+                    </div>
+
+                    <div class="flex justify-between items-center text-[11px] text-slate-400">
+                        <div class="flex gap-2">
+                            <button onclick="swapPostPosition(${post.id}, -1)" class="hover:text-slate-600" ${post.id === 1 ? 'disabled' : ''}>↑ 往前調</button>
+                            <button onclick="swapPostPosition(${post.id}, 1)" class="hover:text-slate-600" ${post.id === posts.length ? 'disabled' : ''}>↓ 往後調</button>
+                        </div>
+                        <button onclick="openReviewModal(${post.id})" class="text-indigo-600 hover:underline">放大檢視</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        // 前端圖片等比壓縮引擎（避免 LocalStorage 5MB 爆掉與跳回預設圖）
+        function compressImage(file, maxWidth = 1000, quality = 0.75) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const elem = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        if (width > maxWidth) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
+                        }
+                        elem.width = width;
+                        elem.height = height;
+                        const ctx = elem.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        resolve(elem.toDataURL('image/jpeg', quality));
+                    };
+                };
+            });
+        }
+
+        // 大頭貼本機上傳
+        async function handleAvatarUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const compressed = await compressImage(file, 400, 0.8);
+            document.getElementById('preview-avatar').src = compressed;
+            localStorage.setItem('feedcraft_avatar', compressed);
+            showToast('大頭貼已更新並儲存！');
+        }
+
+        // 單張圖片本機上傳
+        async function handleSingleUpload(postId, e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const compressed = await compressImage(file, 1000, 0.75);
+            const target = posts.find(p => p.id === postId);
+            if (target) {
+                target.media = [compressed];
+                renderGrid();
+                renderSidebar();
+                saveAllData(false);
+                showToast(`#${postId} 圖片已壓縮上傳儲存！`);
+            }
+        }
+
+        // Carousel 多圖批次上傳
+        async function handleCarouselUpload(postId, e) {
+            const files = Array.from(e.target.files);
+            if (!files.length) return;
+            const target = posts.find(p => p.id === postId);
+            if (!target) return;
+
+            showToast('正在壓縮並上傳多張輪播圖...');
+            for (let f of files) {
+                const compressed = await compressImage(f, 1000, 0.75);
+                target.media.push(compressed);
+            }
+            renderGrid();
+            renderSidebar();
+            saveAllData(false);
+            showToast(`已追加 ${files.length} 張輪播圖片！`);
+        }
+
+        // Carousel 移動多圖順序 (第二張變第一張)
+        function moveCarouselItem(postId, index, direction) {
+            const post = posts.find(p => p.id === postId);
+            if (!post) return;
+            const newIndex = index + direction;
+            if (newIndex < 0 || newIndex >= post.media.length) return;
+
+            const temp = post.media[index];
+            post.media[index] = post.media[newIndex];
+            post.media[newIndex] = temp;
+
+            renderGrid();
+            renderSidebar();
+            saveAllData(false);
+            showToast(`已將第 ${index + 1} 張移至第 ${newIndex + 1} 張！`);
+        }
+
+        // Carousel 刪除單圖
+        function removeCarouselItem(postId, index) {
+            const post = posts.find(p => p.id === postId);
+            if (!post || post.media.length <= 1) {
+                alert('輪播至少需要保留一張素材！');
+                return;
+            }
+            post.media.splice(index, 1);
+            renderGrid();
+            renderSidebar();
+            saveAllData(false);
+        }
+
+        // 貼文對調排序
+        function swapPostPosition(id, direction) {
+            const idx = posts.findIndex(p => p.id === id);
+            const targetIdx = idx + direction;
+            if (targetIdx < 0 || targetIdx >= posts.length) return;
+
+            const temp = posts[idx];
+            posts[idx] = posts[targetIdx];
+            posts[targetIdx] = temp;
+
+            // 重新賦予流水編號保持 1~18
+            posts.forEach((p, i) => p.id = i + 1);
+
+            renderGrid();
+            renderSidebar();
+            saveAllData(false);
+        }
+
+        // 即時文字更新
+        function updatePostCaption(id, val) {
+            const p = posts.find(item => item.id === id);
+            if (p) {
+                p.caption = val;
+                saveAllData(false);
+            }
+        }
+
+        function updateSingleMediaUrl(id, url) {
+            const p = posts.find(item => item.id === id);
+            if (p) {
+                p.media = [url];
+                renderGrid();
+                saveAllData(false);
+            }
+        }
+
+        function changePostType(id, type) {
+            const p = posts.find(item => item.id === id);
+            if (p) {
+                p.type = type;
+                renderGrid();
+                renderSidebar();
+                saveAllData(false);
+            }
+        }
+
+        function togglePinPost(id) {
+            const p = posts.find(item => item.id === id);
+            if (p) {
+                p.isPinned = !p.isPinned;
+                renderGrid();
+                saveAllData(false);
+            }
+        }
+
+        function changePostStatus(id, status) {
+            const p = posts.find(item => item.id === id);
+            if (p) {
+                p.status = status;
+                renderGrid();
+                updateStatistics();
+                saveAllData(false);
+            }
+        }
+
+        // 個人簡介與帳號資訊
+        function updateProfileMeta() {
+            profileMeta.username = document.getElementById('input-username').value;
+            profileMeta.fullname = document.getElementById('input-fullname').value;
+            profileMeta.bio = document.getElementById('input-bio').value;
+
+            renderProfile();
+            localStorage.setItem('feedcraft_profile', JSON.stringify(profileMeta));
+        }
+
+        function renderProfile() {
+            document.getElementById('preview-username').innerText = profileMeta.username;
+            document.getElementById('preview-fullname').innerText = profileMeta.fullname;
+            document.getElementById('preview-bio').innerText = profileMeta.bio;
+            document.getElementById('input-username').value = profileMeta.username;
+            document.getElementById('input-fullname').value = profileMeta.fullname;
+            document.getElementById('input-bio').value = profileMeta.bio;
+        }
+
+        // 審核統計數字
+        function updateStatistics() {
+            let approved = 0, pending = 0, rejected = 0;
+            posts.forEach(p => {
+                if (p.status === 'approved') approved++;
+                else if (p.status === 'rejected') rejected++;
+                else pending++;
+            });
+            document.getElementById('stat-approved').innerText = approved;
+            document.getElementById('stat-pending').innerText = pending;
+            document.getElementById('stat-rejected').innerText = rejected;
+        }
+
+        // 放大檢視 Modal
+        function openReviewModal(postId) {
+            currentModalPostId = postId;
+            currentCarouselIndex = 0;
+            const post = posts.find(p => p.id === postId);
+            if (!post) return;
+
+            document.getElementById('modal-post-index').innerText = `#${post.id}`;
+            document.getElementById('modal-post-type').innerText = post.type === 'reels' ? 'Reels 短影音' : post.type === 'carousel' ? '多圖輪播' : '圖文貼文';
+            document.getElementById('modal-caption').innerText = post.caption || '（尚無文案）';
+            
+            updateModalStatusBadge(post.status);
+            renderModalMedia(post);
+
+            document.getElementById('review-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeReviewModal() {
+            document.getElementById('review-modal').classList.add('hidden');
+        }
+
+        function renderModalMedia(post) {
+            const container = document.getElementById('modal-media-container');
+            const prevBtn = document.getElementById('carousel-prev');
+            const nextBtn = document.getElementById('carousel-next');
+            const indicator = document.getElementById('carousel-indicator');
+
+            if (post.type === 'carousel' && post.media.length > 1) {
+                prevBtn.classList.remove('hidden');
+                prevBtn.classList.add('flex');
+                nextBtn.classList.remove('hidden');
+                nextBtn.classList.add('flex');
+                indicator.classList.remove('hidden');
+                indicator.innerText = `${currentCarouselIndex + 1} / ${post.media.length}`;
+            } else {
+                prevBtn.classList.add('hidden');
+                nextBtn.classList.add('hidden');
+                indicator.classList.add('hidden');
+            }
+
+            const currentMedia = post.media[currentCarouselIndex] || post.media[0];
+            container.innerHTML = `<img src="${currentMedia}" referrerpolicy="no-referrer" class="max-h-[80vh] w-auto max-w-full object-contain">`;
+        }
+
+        function changeCarouselSlide(direction) {
+            const post = posts.find(p => p.id === currentModalPostId);
+            if (!post || post.type !== 'carousel') return;
+            currentCarouselIndex += direction;
+            if (currentCarouselIndex < 0) currentCarouselIndex = post.media.length - 1;
+            if (currentCarouselIndex >= post.media.length) currentCarouselIndex = 0;
+            renderModalMedia(post);
+        }
+
+        function navigateModalPost(direction) {
+            let nextId = currentModalPostId + direction;
+            if (nextId < 1) nextId = posts.length;
+            if (nextId > posts.length) nextId = 1;
+            openReviewModal(nextId);
+        }
+
+        function setModalPostStatus(status) {
+            changePostStatus(currentModalPostId, status);
+            updateModalStatusBadge(status);
+            renderSidebar();
+            showToast(`已將 #${currentModalPostId} 設為 ${status === 'approved' ? '核准' : status === 'rejected' ? '需修改' : '待審核'}`);
+        }
+
+        function updateModalStatusBadge(status) {
+            const badge = document.getElementById('modal-status-badge');
+            if (status === 'approved') {
+                badge.innerHTML = '<span class="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-700">✅ 主管已核准</span>';
+            } else if (status === 'rejected') {
+                badge.innerHTML = '<span class="px-2 py-0.5 rounded text-xs font-semibold bg-rose-100 text-rose-700">⚠️ 需修改</span>';
+            } else {
+                badge.innerHTML = '<span class="px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-700">⏳ 待審核</span>';
+            }
+        }
+
+        // 提報模式切換
+        function togglePresentationMode() {
+            if (isPresentationMode) {
+                disablePresentationMode();
+            } else {
+                enablePresentationMode();
+            }
+        }
+
+        function enablePresentationMode() {
+            isPresentationMode = true;
+            document.getElementById('sidebar-container').classList.add('hidden');
+            document.getElementById('sidebar-toggle-btn').classList.add('hidden');
+            document.getElementById('pres-btn-text').innerText = '退出提報';
+            document.getElementById('pres-btn').classList.replace('bg-slate-800', 'bg-indigo-600');
+        }
+
+        function disablePresentationMode() {
+            isPresentationMode = false;
+            document.getElementById('sidebar-container').classList.remove('hidden');
+            document.getElementById('sidebar-toggle-btn').classList.remove('hidden');
+            document.getElementById('pres-btn-text').innerText = '主管提報模式';
+            document.getElementById('pres-btn').classList.replace('bg-indigo-600', 'bg-slate-800');
+        }
+
+        function toggleSidebar() {
+            isSidebarOpen = !isSidebarOpen;
+            const sidebar = document.getElementById('sidebar-container');
+            if (isSidebarOpen) sidebar.classList.remove('hidden');
+            else sidebar.classList.add('hidden');
+        }
+
+        function toggleAccountSettings() {
+            const content = document.getElementById('account-settings-content');
+            const chevron = document.getElementById('account-settings-chevron');
+            content.classList.toggle('hidden');
+            chevron.classList.toggle('rotate-180');
+        }
+
+        // 儲存核心：本地 + 私人 Google Apps Script 雲端
+        async function saveAllData(notify = true) {
+            try {
+                localStorage.setItem('feedcraft_posts_18', JSON.stringify(posts));
+                localStorage.setItem('feedcraft_profile', JSON.stringify(profileMeta));
+            } catch(e) {
+                console.warn('LocalStorage Quota Full, handled smoothly.');
+            }
+
+            const gasUrl = localStorage.getItem('feedcraft_custom_gas_url');
+            if (gasUrl) {
+                try {
+                    await fetch(gasUrl, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'save',
+                            posts: posts,
+                            profile: profileMeta,
+                            updatedAt: new Date().toISOString()
+                        })
+                    });
+                } catch(err) {
+                    console.log('GAS sync failed or offline:', err);
+                }
+            }
+
+            if (notify) showToast('✅ 18 格排版與文案已安全保存！');
+        }
+
+        // 複製主管審核連結（防呆與純淨網址生成）
+        function copyReviewLink() {
+            let currentUrl = window.location.href.split('?')[0].split('#')[0];
+            
+            // 避免 blob 或本機路徑
+            if (currentUrl.startsWith('blob:') || currentUrl.startsWith('file:') || currentUrl.includes('scf.usercontent.goog')) {
+                let savedCustom = localStorage.getItem('feedcraft_base_domain');
+                if (!savedCustom) {
+                    savedCustom = prompt('您目前在預覽環境。請輸入您上傳 GitHub Pages 或 Vercel 後的正式網址 (如 https://username.github.io/repo/)：');
+                    if (savedCustom) {
+                        savedCustom = savedCustom.trim().replace(/\/$/, '');
+                        localStorage.setItem('feedcraft_base_domain', savedCustom);
+                    }
+                }
+                if (savedCustom) currentUrl = savedCustom;
+            }
+
+            const shareUrl = `${currentUrl}?mode=review`;
+
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                showToast('已複製主管審核專屬連結！');
+            }).catch(() => {
+                prompt('請手動複製此主管審核專用網址：', shareUrl);
+            });
+        }
+
+        // 自訂私人雲端設定
+        function toggleCustomCloudModal() {
+            const modal = document.getElementById('cloud-modal');
+            const input = document.getElementById('custom-gas-url');
+            input.value = localStorage.getItem('feedcraft_custom_gas_url') || '';
+            modal.classList.toggle('hidden');
+        }
+
+        function saveCustomCloudUrl() {
+            const url = document.getElementById('custom-gas-url').value.trim();
+            if (url) {
+                localStorage.setItem('feedcraft_custom_gas_url', url);
+                showToast('私人雲端網址已成功保存！');
+            }
+            toggleCustomCloudModal();
+        }
+
+        function clearCustomCloudUrl() {
+            localStorage.removeItem('feedcraft_custom_gas_url');
+            document.getElementById('custom-gas-url').value = '';
+            showToast('已重設回預設設定');
+            toggleCustomCloudModal();
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = msg;
+            toast.classList.remove('translate-y-16', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-16', 'opacity-0');
+            }, 2500);
+        }
+    </script>
+</body>
+</html>

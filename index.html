@@ -380,55 +380,74 @@ Monotony is the real risk, but adventure is the cure.</textarea>
             lucide.createIcons();
         });
 
-        // 載入資料（支援跨裝置讀取 Google Apps Script 雲端）
-        async function loadInitialData() {
-            const params = new URLSearchParams(window.location.search);
-            const reviewId = params.get('review_id');
-            const gasSrc = params.get('gas_src') ? decodeURIComponent(params.get('gas_src')) : localStorage.getItem('feedcraft_custom_gas_url');
+// 透過 JSONP 跨網域讀取 GAS 資料（避開 CORS 阻擋）
+function fetchGasJsonp(url) {
+    return new Promise((resolve, reject) => {
+        const callbackName = 'gas_callback_' + Math.round(100000 * Math.random());
+        window[callbackName] = function(data) {
+            delete window[callbackName];
+            if (script.parentNode) script.parentNode.removeChild(script);
+            resolve(data);
+        };
+        const script = document.createElement('script');
+        script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + callbackName;
+        script.onerror = () => {
+            delete window[callbackName];
+            if (script.parentNode) script.parentNode.removeChild(script);
+            reject(new Error('JSONP load failed'));
+        };
+        document.body.appendChild(script);
+    });
+}
 
-            if (reviewId && gasSrc) {
-                showToast('正在從雲端載入 18 格排版與文案...');
-                try {
-                    const res = await fetch(`${gasSrc}?action=get&id=${reviewId}`);
-                    const data = await res.json();
-                    if (data && data.posts) {
-                        posts = data.posts;
-                        if (data.profile) profileMeta = data.profile;
-                        showToast('✅ 雲端資料同步完成！');
-                        renderProfile();
-                        renderGrid();
-                        renderSidebar();
-                        updateStatistics();
-                        return;
-                    }
-                } catch (err) {
-                    console.warn('雲端讀取異常，載入本機暫存:', err);
-                }
+// 載入資料（支援跨裝置）
+async function loadInitialData() {
+    const params = new URLSearchParams(window.location.search);
+    const reviewId = params.get('review_id');
+    const gasSrc = params.get('gas_src') ? decodeURIComponent(params.get('gas_src')) : localStorage.getItem('feedcraft_custom_gas_url');
+
+    if (reviewId && gasSrc) {
+        showToast('正在從雲端載入 18 格排版與文案...');
+        try {
+            const data = await fetchGasJsonp(`${gasSrc}?action=get&id=${reviewId}`);
+            if (data && data.posts) {
+                posts = data.posts;
+                if (data.profile) profileMeta = data.profile;
+                showToast('✅ 雲端資料同步完成！');
+                renderProfile();
+                renderGrid();
+                renderSidebar();
+                updateStatistics();
+                return;
             }
-
-            // 本地快取讀取
-            const savedPosts = localStorage.getItem('feedcraft_posts_18');
-            if (savedPosts) {
-                try { posts = JSON.parse(savedPosts); } catch(e) { posts = defaultPosts; }
-            } else {
-                posts = defaultPosts;
-            }
-
-            const savedProfile = localStorage.getItem('feedcraft_profile');
-            if (savedProfile) {
-                try { profileMeta = JSON.parse(savedProfile); } catch(e) {}
-            }
-
-            const savedAvatar = localStorage.getItem('feedcraft_avatar');
-            if (savedAvatar) {
-                document.getElementById('preview-avatar').src = savedAvatar;
-            }
-
-            renderProfile();
-            renderGrid();
-            renderSidebar();
-            updateStatistics();
+        } catch (err) {
+            console.warn('JSONP 讀取失敗，載入本機暫存:', err);
         }
+    }
+
+    // 本機暫存讀取備援
+    const savedPosts = localStorage.getItem('feedcraft_posts_18');
+    if (savedPosts) {
+        try { posts = JSON.parse(savedPosts); } catch(e) { posts = defaultPosts; }
+    } else {
+        posts = defaultPosts;
+    }
+
+    const savedProfile = localStorage.getItem('feedcraft_profile');
+    if (savedProfile) {
+        try { profileMeta = JSON.parse(savedProfile); } catch(e) {}
+    }
+
+    const savedAvatar = localStorage.getItem('feedcraft_avatar');
+    if (savedAvatar) {
+        document.getElementById('preview-avatar').src = savedAvatar;
+    }
+
+    renderProfile();
+    renderGrid();
+    renderSidebar();
+    updateStatistics();
+}
 
         function checkUrlMode() {
             const params = new URLSearchParams(window.location.search);

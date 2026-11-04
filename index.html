@@ -91,13 +91,12 @@
         <!-- 左側：iPhone 18 格排版模擬器 -->
         <div id="phone-container" class="w-full lg:w-[420px] flex-shrink-0 flex flex-col items-center">
             <div class="relative w-[380px] bg-black rounded-[52px] p-3 shadow-2xl ring-1 ring-slate-900/10">
-                <!-- iPhone 聽筒 / 動態島 -->
                 <div class="absolute top-5 left-1/2 -translate-x-1/2 w-28 h-6 bg-black rounded-full z-20 flex items-center justify-between px-2.5">
                     <div class="w-2.5 h-2.5 rounded-full bg-slate-900"></div>
                     <div class="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></div>
                 </div>
 
-                <!-- 手機內螢幕 (垂直捲動) -->
+                <!-- 手機內螢幕 (可垂直捲動) -->
                 <div id="phone-screen" class="w-full h-[740px] bg-white rounded-[42px] overflow-y-auto custom-scrollbar flex flex-col relative select-none">
                     
                     <!-- 頂部時間列 -->
@@ -122,9 +121,10 @@
                         </div>
                     </div>
 
-                    <!-- 個人資訊區塊 (大頭貼/統計) -->
+                    <!-- 個人資訊區塊 -->
                     <div class="px-4 pt-3 pb-2">
                         <div class="flex items-center justify-between gap-4">
+                            <!-- 大頭貼 -->
                             <div class="relative group cursor-pointer" onclick="document.getElementById('avatar-file-input').click()">
                                 <div class="w-[78px] h-[78px] rounded-full p-[2.5px] bg-gradient-to-tr from-amber-400 via-rose-500 to-purple-600">
                                     <div class="w-full h-full rounded-full bg-white p-[2px]">
@@ -153,7 +153,7 @@
                             </div>
                         </div>
 
-                        <!-- 帳號全名與個人簡介 Bio -->
+                        <!-- 帳號全名與 Bio -->
                         <div class="mt-2.5">
                             <div id="preview-fullname" class="font-bold text-xs text-slate-900">Aluminum Skeleton - Designed In Canada</div>
                             <div id="preview-bio" class="text-xs text-slate-700 whitespace-pre-line mt-0.5 leading-relaxed">Wake from sameness.
@@ -161,7 +161,6 @@ Monotony is the real risk, but adventure is the cure.</div>
                             <span class="text-xs text-slate-400 mt-0.5 block">翻譯年糕</span>
                         </div>
 
-                        <!-- 追蹤 / 發訊息 按鈕群 -->
                         <div class="grid grid-cols-2 gap-2 mt-3 text-xs font-semibold">
                             <button class="bg-slate-100 hover:bg-slate-200 text-slate-900 py-1.5 rounded-lg flex items-center justify-center gap-1 transition">
                                 追蹤中 <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
@@ -172,7 +171,7 @@ Monotony is the real risk, but adventure is the cure.</div>
                         </div>
                     </div>
 
-                    <!-- IG 頁籤導航 -->
+                    <!-- 頁籤切換 -->
                     <div class="border-t border-slate-100 mt-2 flex justify-around text-slate-400">
                         <button class="flex-1 py-2.5 flex justify-center text-slate-900 border-b-2 border-slate-900">
                             <i data-lucide="grid" class="w-5 h-5"></i>
@@ -193,13 +192,13 @@ Monotony is the real risk, but adventure is the cure.</div>
                     </div>
                 </div>
             </div>
-            <p class="text-xs text-slate-400 mt-2 text-center">支援捲動滑動檢視全數 18 格排版</p>
+            <p class="text-xs text-slate-400 mt-2 text-center">支援垂直捲動檢視 18 格排版</p>
         </div>
 
-        <!-- 右側：編輯與設定管理側欄 -->
+        <!-- 右側：編輯面板 -->
         <div id="sidebar-container" class="flex-1 w-full max-w-2xl flex flex-col gap-4">
             
-            <!-- 帳號基礎設定卡片 -->
+            <!-- 帳號基本設定 -->
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
                 <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleAccountSettings()">
                     <div class="flex items-center gap-2">
@@ -225,7 +224,7 @@ Monotony is the real risk, but adventure is the cure.</textarea>
                 </div>
             </div>
 
-            <!-- 18 篇素材文案編輯器清單 -->
+            <!-- 18 篇素材與文案管理清單 -->
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col">
                 <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
                     <div class="flex items-center gap-2">
@@ -261,7 +260,7 @@ Monotony is the real risk, but adventure is the cure.</textarea>
                 </div>
             </div>
 
-            <!-- 右側文案與審稿反饋面板 -->
+            <!-- 右側文案與審核區 -->
             <div class="w-full md:w-1/2 p-6 flex flex-col justify-between overflow-y-auto custom-scrollbar max-h-[500px] md:max-h-none">
                 <div>
                     <div class="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -316,7 +315,7 @@ Monotony is the real risk, but adventure is the cure.</textarea>
                 <h3 class="font-bold text-base text-slate-900">自訂私人雲端 (Google Apps Script)</h3>
             </div>
             <p class="text-xs text-slate-500 leading-relaxed mb-4">
-                貼上 Google Apps Script 網址，主管與您的修改將自動即時同步至您的專屬 Google 試算表。若未設定，系統會使用免費免設定的雲端通道傳送資料。
+                請貼入您已部署為網頁應用程式的 Google Apps Script 網址。設定完成後，點擊「複製主管審核連結」會自動連帶此資料庫資訊，主管在不同裝置上打開即可即時取得排審資料。
             </p>
             <div class="space-y-3">
                 <div>
@@ -335,7 +334,7 @@ Monotony is the real risk, but adventure is the cure.</textarea>
         </div>
     </div>
 
-    <!-- 通知 Toast -->
+    <!-- 訊息 Toast -->
     <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-xl text-xs font-medium z-50 transform translate-y-16 opacity-0 transition-all duration-300 flex items-center gap-2">
         <i data-lucide="check" class="w-4 h-4 text-emerald-400"></i>
         <span id="toast-message">操作完成</span>
@@ -381,53 +380,33 @@ Monotony is the real risk, but adventure is the cure.</textarea>
             lucide.createIcons();
         });
 
-        // 載入資料（支援雲端 ID 讀取）
+        // 載入資料（支援跨裝置讀取 Google Apps Script 雲端）
         async function loadInitialData() {
             const params = new URLSearchParams(window.location.search);
             const reviewId = params.get('review_id');
+            const gasSrc = params.get('gas_src') ? decodeURIComponent(params.get('gas_src')) : localStorage.getItem('feedcraft_custom_gas_url');
 
-            if (reviewId) {
-                showToast('正在從雲端載入主管審核排版...');
-                const gasUrl = localStorage.getItem('feedcraft_custom_gas_url');
-                let loaded = false;
-
-                if (gasUrl) {
-                    try {
-                        const res = await fetch(`${gasUrl}?action=get&id=${reviewId}`);
-                        const data = await res.json();
-                        if (data && data.posts) {
-                            posts = data.posts;
-                            if (data.profile) profileMeta = data.profile;
-                            loaded = true;
-                        }
-                    } catch(e) {}
-                }
-
-                if (!loaded) {
-                    try {
-                        const res = await fetch(`https://api.jsonbin.io/v3/b/${reviewId}/latest`, {
-                            headers: { 'X-Bin-Meta': 'false' }
-                        });
-                        const data = await res.json();
-                        if (data && data.posts) {
-                            posts = data.posts;
-                            if (data.profile) profileMeta = data.profile;
-                            loaded = true;
-                        }
-                    } catch(e) {}
-                }
-                
-                if (loaded) {
-                    showToast('✅ 已成功載入審核專案！');
-                    renderProfile();
-                    renderGrid();
-                    renderSidebar();
-                    updateStatistics();
-                    return;
+            if (reviewId && gasSrc) {
+                showToast('正在從雲端載入 18 格排版與文案...');
+                try {
+                    const res = await fetch(`${gasSrc}?action=get&id=${reviewId}`);
+                    const data = await res.json();
+                    if (data && data.posts) {
+                        posts = data.posts;
+                        if (data.profile) profileMeta = data.profile;
+                        showToast('✅ 雲端資料同步完成！');
+                        renderProfile();
+                        renderGrid();
+                        renderSidebar();
+                        updateStatistics();
+                        return;
+                    }
+                } catch (err) {
+                    console.warn('雲端讀取異常，載入本機暫存:', err);
                 }
             }
 
-            // 預設讀取本機快取
+            // 本地快取讀取
             const savedPosts = localStorage.getItem('feedcraft_posts_18');
             if (savedPosts) {
                 try { posts = JSON.parse(savedPosts); } catch(e) { posts = defaultPosts; }
@@ -534,7 +513,7 @@ Monotony is the real risk, but adventure is the cure.</textarea>
                     mediaInputHtml = `
                         <div class="space-y-1.5">
                             <div class="flex items-center gap-2">
-                                <input type="text" value="${post.videoUrl || ''}" onchange="updateVideoUrl(${post.id}, this.value)" placeholder="影片網址或點擊右側上傳..." class="flex-1 bg-white border border-slate-200 rounded px-2 py-1 text-slate-600 focus:outline-none">
+                                <input type="text" value="${post.videoUrl || ''}" onchange="updateVideoUrl(${post.id}, this.value)" placeholder="貼上影片直連網址或點擊右側上傳..." class="flex-1 bg-white border border-slate-200 rounded px-2 py-1 text-slate-600 focus:outline-none">
                                 <button onclick="document.getElementById('video-file-${post.id}').click()" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-[11px] font-medium transition flex items-center gap-1">
                                     <i data-lucide="video" class="w-3 h-3"></i> 上傳 Reels
                                 </button>
@@ -542,7 +521,7 @@ Monotony is the real risk, but adventure is the cure.</textarea>
                             </div>
                             <div class="flex items-center justify-between text-[11px] text-slate-500 bg-white p-1.5 rounded border border-slate-200">
                                 <span>封面圖：</span>
-                                <button onclick="document.getElementById('reels-cover-file-${post.id}').click()" class="text-indigo-600 hover:underline">自訂更換封面</button>
+                                <button onclick="document.getElementById('reels-cover-file-${post.id}').click()" class="text-indigo-600 hover:underline">自訂封面相片</button>
                                 <input type="file" id="reels-cover-file-${post.id}" accept="image/*" class="hidden" onchange="handleSingleUpload(${post.id}, event)">
                             </div>
                         </div>
@@ -647,14 +626,13 @@ Monotony is the real risk, but adventure is the cure.</textarea>
             const file = e.target.files[0];
             if (!file) return;
 
-            showToast('正在處理 Reels 影片並擷取封面...');
+            showToast('正在讀取 Reels 影片並截取封面...');
             const videoUrl = URL.createObjectURL(file);
             const target = posts.find(p => p.id === postId);
             if (!target) return;
 
             target.videoUrl = videoUrl;
 
-            // 擷取第一幀為九宮格封面圖
             const video = document.createElement('video');
             video.src = videoUrl;
             video.muted = true;
@@ -673,7 +651,7 @@ Monotony is the real risk, but adventure is the cure.</textarea>
                     renderGrid();
                     renderSidebar();
                     saveAllData(false);
-                    showToast(`#${postId} Reels 上傳並已自動生成封面！`);
+                    showToast(`#${postId} Reels 影片載入成功並已生成封面！`);
                 }, 200);
             };
         }
@@ -686,7 +664,6 @@ Monotony is the real risk, but adventure is the cure.</textarea>
             }
         }
 
-        // 大頭貼本機上傳
         async function handleAvatarUpload(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -696,7 +673,6 @@ Monotony is the real risk, but adventure is the cure.</textarea>
             showToast('大頭貼已更新並儲存！');
         }
 
-        // 單圖上傳
         async function handleSingleUpload(postId, e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -711,7 +687,6 @@ Monotony is the real risk, but adventure is the cure.</textarea>
             }
         }
 
-        // Carousel 批次上傳
         async function handleCarouselUpload(postId, e) {
             const files = Array.from(e.target.files);
             if (!files.length) return;
@@ -992,6 +967,7 @@ Monotony is the real risk, but adventure is the cure.</textarea>
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             action: 'save',
+                            id: 'default_project',
                             posts: posts,
                             profile: profileMeta,
                             updatedAt: new Date().toISOString()
@@ -1003,53 +979,43 @@ Monotony is the real risk, but adventure is the cure.</textarea>
             if (notify) showToast('✅ 18 格排版與文案已安全保存！');
         }
 
-        // 複製主管審核連結（生成雲端分享 ID）
+        // 複製主管審核連結（自帶雲端定位識別，跨電腦直接讀取）
         async function copyReviewLink() {
-            showToast('正在發布至審核雲端並生成連結...');
+            showToast('正在發布至雲端並生成專屬審核連結...');
             const baseUrl = window.location.href.split('?')[0].split('#')[0];
-            let shareId = '';
-
             const gasUrl = localStorage.getItem('feedcraft_custom_gas_url');
-            if (gasUrl) {
-                shareId = 'proj_' + Date.now().toString(36);
-                try {
-                    await fetch(gasUrl, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            action: 'save',
-                            id: shareId,
-                            posts: posts,
-                            profile: profileMeta
-                        })
-                    });
-                } catch(e) {}
-            } else {
-                try {
-                    const res = await fetch('https://api.jsonbin.io/v3/b', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Bin-Private': 'false'
-                        },
-                        body: JSON.stringify({ posts, profile: profileMeta })
-                    });
-                    const resData = await res.json();
-                    if (resData && resData.metadata) {
-                        shareId = resData.metadata.id;
-                    }
-                } catch(e) {}
+            
+            if (!gasUrl) {
+                alert('請先點擊上方「自訂私人雲端」貼入您的 Google Apps Script 網址！');
+                toggleCustomCloudModal();
+                return;
             }
 
-            const finalUrl = shareId 
-                ? `${baseUrl}?review_id=${shareId}&mode=review`
-                : `${baseUrl}?mode=review`;
+            const shareId = 'proj_' + Date.now().toString(36);
+
+            try {
+                await fetch(gasUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'save',
+                        id: shareId,
+                        posts: posts,
+                        profile: profileMeta
+                    })
+                });
+            } catch (e) {
+                console.error('Save error:', e);
+            }
+
+            const encodedGas = encodeURIComponent(gasUrl);
+            const finalUrl = `${baseUrl}?review_id=${shareId}&gas_src=${encodedGas}&mode=review`;
 
             navigator.clipboard.writeText(finalUrl).then(() => {
                 showToast('✅ 主管專屬審核連結已複製到剪貼簿！');
             }).catch(() => {
-                prompt('請手動複製此主管審核連結：', finalUrl);
+                prompt('請手動複製此主管審核專屬連結：', finalUrl);
             });
         }
 

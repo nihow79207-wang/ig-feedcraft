@@ -873,30 +873,41 @@ Monotony is the real risk, but adventure is the cure.</textarea>
             document.getElementById('review-modal').classList.add('hidden');
         }
 
-        function renderModalMedia(post) {
+function renderModalMedia(post) {
             const container = document.getElementById('modal-media-container');
             const prevBtn = document.getElementById('carousel-prev');
             const nextBtn = document.getElementById('carousel-next');
             const indicator = document.getElementById('carousel-indicator');
 
-            // 判斷是否具備有效的 HTTP/HTTPS 影片網址
-            const hasValidHttpVideo = post.videoUrl && (post.videoUrl.startsWith('http://') || post.videoUrl.startsWith('https://'));
-
-            if (post.type === 'reels' && hasValidHttpVideo) {
-                prevBtn.classList.add('hidden');
-                nextBtn.classList.add('hidden');
-                indicator.classList.add('hidden');
-                container.innerHTML = `
-                    <video src="${post.videoUrl}" controls autoplay loop playsinline class="max-h-[80vh] w-auto max-w-full rounded-lg"></video>
-                `;
-                return;
-            }
-
-            // 若為 Reels 但無外部串流網址（避免黑框）
+            // 處理 Reels 影片播放
             if (post.type === 'reels') {
                 prevBtn.classList.add('hidden');
                 nextBtn.classList.add('hidden');
                 indicator.classList.add('hidden');
+
+                const videoUrl = post.videoUrl ? post.videoUrl.trim() : '';
+
+                // 情況 1：Google Drive 預覽連結或 GAS stream 網址 -> 改用 iframe 內嵌播放
+                if (videoUrl.includes('drive.google.com') || videoUrl.includes('script.google.com') || videoUrl.includes('action=stream')) {
+                    let embedUrl = videoUrl;
+                    if (embedUrl.includes('drive.google.com/file/d/')) {
+                        embedUrl = embedUrl.replace(/\/view(\?.*)?$/, '/preview');
+                    }
+                    container.innerHTML = `
+                        <iframe src="${embedUrl}" class="w-full h-[70vh] rounded-lg border-0" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
+                    `;
+                    return;
+                }
+
+                // 情況 2：一般 MP4/WebM 直連網址 -> 使用原生 video 標籤
+                if (videoUrl.startsWith('http://') || videoUrl.startsWith('https://')) {
+                    container.innerHTML = `
+                        <video src="${videoUrl}" controls autoplay loop playsinline class="max-h-[80vh] w-auto max-w-full rounded-lg"></video>
+                    `;
+                    return;
+                }
+
+                // 情況 3：尚未填寫雲端網址 -> 顯示靜態封面與操作提示
                 const cover = post.media[0] || 'https://placehold.co/800x1000?text=Reels+Cover';
                 container.innerHTML = `
                     <div class="relative flex flex-col items-center justify-center max-h-[80vh]">
@@ -906,7 +917,7 @@ Monotony is the real risk, but adventure is the cure.</textarea>
                                 <i data-lucide="play" class="w-6 h-6 fill-white"></i>
                             </div>
                             <span class="text-white text-xs font-semibold">短影音封面預覽</span>
-                            <span class="text-slate-300 text-[10px] mt-1">若需跨裝置線上播放，請於側邊欄貼入 MP4 直連網址</span>
+                            <span class="text-slate-300 text-[10px] mt-1">請貼入 Google Drive /preview 網址或 MP4 直連網址即可線上播放</span>
                         </div>
                     </div>
                 `;
@@ -914,6 +925,7 @@ Monotony is the real risk, but adventure is the cure.</textarea>
                 return;
             }
 
+            // 處理 Carousel 多圖輪播
             if (post.type === 'carousel' && post.media.length > 1) {
                 prevBtn.classList.remove('hidden');
                 prevBtn.classList.add('flex');
